@@ -1,4 +1,6 @@
 require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 const { create } = require('@open-wa/wa-automate');
 const axios = require('axios');
 
@@ -12,6 +14,7 @@ const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 // GERAR RESPOSTA
 // ================
 async function gerarResposta(mensagem) {
+  const callStarted = Date.now();
   try {
     const resposta = await axios.post(
       GROQ_API_URL,
@@ -38,9 +41,16 @@ async function gerarResposta(mensagem) {
     );
 
     const textoGerado = resposta.data.choices?.[0]?.message?.content?.trim();
+    groqLastStatus = 'ok';
+    groqLastLatencyMs = Date.now() - callStarted;
+    groqLastCallTs = Date.now();
     return textoGerado || "❌ Desculpe, não consegui gerar uma resposta.";
   } catch (err) {
-    console.error('❌ Erro na API da Groq:', err.response?.data || err.message);
+    groqLastStatus = 'erro';
+    groqLastLatencyMs = null;
+    groqLastCallTs = Date.now();
+    groqErrorCount += 1;
+    logError('Erro na API da Groq', err);
     return "❌ Erro ao se comunicar com a IA.";
   }
 }
@@ -57,23 +67,68 @@ function formatUptime(ms) {
   return `${hours}h ${minutes}m ${seconds}s`;
 }
 
-let clientInstance = null;
+function formatUptimeDetailed(ms) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+}
 
-create({
-  useChrome: true,
-  executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-  headless: false
-}).then(client => {
-  start(client);
-});
+let clientInstance = null;
+let whatsappState = 'stopped';
+let messageCount = 0;
+const conversationIds = new Set();
+let groqLastStatus = 'desconhecido';
+let groqLastLatencyMs = null;
+let groqErrorCount = 0;
+let groqLastCallTs = null;
+const errorLogs = [];
+const sessionDir = path.join(__dirname, '_IGNORE_session');
+const cacheDir = path.join(__dirname, '_IGNORE_BOT');
+
+function logError(message, err) {
+  const payload = {
+    ts: new Date().toISOString(),
+    message: typeof message === 'string' ? message : String(message),
+    detail: err?.message || null
+  };
+  errorLogs.push(payload);
+  if (errorLogs.length > 100) errorLogs.shift();
+  console.error('❌', payload.message, payload.detail ? `| ${payload.detail}` : '');
+}
+
+function createClient() {
+  // Headless + useChrome false evita abrir janela gráfica; QR aparece apenas no terminal.
+  console.log('🟢 Aguardando conexão: o QR Code será exibido no terminal.');
+  return create({
+    sessionId: "BOT",
+    multiDevice: true,
+    authTimeout: 60,
+    blockCrashLogs: true,
+    disableSpins: true,
+    headless: true,
+    useChrome: false,
+    qrTimeout: 0
+  });
+}
 
 async function start(client) {
   console.log('✅ Bot conectado no WhatsApp com sucesso!');
   clientInstance = client;
+  whatsappState = 'connected';
+
+  client.onStateChanged((state) => {
+    whatsappState = state || 'unknown';
+    console.log(`ℹ️ Estado do WhatsApp: ${whatsappState}`);
+  });
 
   client.onMessage(async (message) => {
     try {
       const { body, from, isGroupMsg, chat, sender, mentionedJidList } = message;
+      messageCount += 1;
+      if (from) conversationIds.add(from);
       const command = body.toLowerCase();
       const groupId = chat?.groupMetadata?.id;
       const senderId = sender.id;
@@ -159,29 +214,28 @@ Envie sua dúvida ou mensagem para receber uma resposta automática!
       }
 
     } catch (err) {
-      console.error('❌ Erro ao processar mensagem:', err.message);
+      logError('Erro ao processar mensagem', err);
     }
   }); // <-- FECHANDO client.onMessage
 } // <-- FECHANDO corretamente a função start(client)
 
 function startBot(io) {
-  console.log('🚀 Iniciando bot via interface...');
-  return create({
-    sessionId: "BOT",
-    multiDevice: true,
-    authTimeout: 60,
-    blockCrashLogs: true,
-    disableSpins: true,
-    headless: true,
-    qrTimeout: 0
-  })
+  if (clientInstance) {
+    io?.emit('botStatus', 'Bot já está rodando.');
+    return Promise.resolve(clientInstance);
+  }
+
+  console.log('🚀 Iniciando bot... QR será exibido apenas no terminal.');
+  return createClient()
     .then(client => {
       start(client);
-      io.emit('botStatus', 'Bot iniciado com sucesso!');
+      io?.emit('botStatus', 'Bot iniciado com sucesso!');
+      return client;
     })
     .catch(err => {
       console.error('❌ Erro ao iniciar bot:', err);
-      io.emit('botStatus', 'Erro ao iniciar bot.');
+      io?.emit('botStatus', 'Erro ao iniciar bot.');
+      throw err;
     });
 }
 
@@ -190,6 +244,7 @@ function stopBot() {
     console.log('🛑 Parando bot...');
     clientInstance.close();
     clientInstance = null;
+    whatsappState = 'stopped';
   }
 }
 
@@ -197,4 +252,66 @@ function getBotStatus() {
   return clientInstance ? 'Rodando' : 'Parado';
 }
 
-module.exports = { startBot, stopBot, getBotStatus };
+async function getFolderSizeBytes(dir) {
+  try {
+    const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+    let total = 0;
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        total += await getFolderSizeBytes(fullPath);
+      } else if (entry.isFile()) {
+        const stat = await fs.promises.stat(fullPath);
+        total += stat.size;
+      }
+    }
+    return total;
+  } catch (err) {
+    if (err.code === 'ENOENT') return 0;
+    logError(`Falha ao ler pasta ${dir}`, err);
+    return 0;
+  }
+}
+
+async function getMetrics() {
+  const now = Date.now();
+  const memory = process.memoryUsage();
+  const sessionSize = await getFolderSizeBytes(sessionDir);
+  const cacheSize = await getFolderSizeBytes(cacheDir);
+
+  return {
+    botStatus: getBotStatus(),
+    whatsappState,
+    connected: Boolean(clientInstance),
+    uptimeMs: now - startTime,
+    uptime: formatUptimeDetailed(now - startTime),
+    messageCount,
+    conversationCount: conversationIds.size,
+    groq: {
+      status: groqLastStatus,
+      latencyMs: groqLastLatencyMs,
+      errorCount: groqErrorCount,
+      lastCallTs: groqLastCallTs
+    },
+    memory: {
+      rssBytes: memory.rss,
+      heapUsedBytes: memory.heapUsed,
+      externalBytes: memory.external
+    },
+    storage: {
+      sessionDirSizeBytes: sessionSize,
+      cacheDirSizeBytes: cacheSize
+    },
+    errors: errorLogs.slice(-50).reverse(),
+    timestamp: new Date(now).toISOString()
+  };
+}
+
+module.exports = { startBot, stopBot, getBotStatus, getMetrics };
+
+// Permite executar "node index.js" diretamente para iniciar o bot.
+if (require.main === module) {
+  startBot().catch(() => {
+    // Erro já foi logado; manter processo vivo para facilitar debug se necessário.
+  });
+}

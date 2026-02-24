@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painel Zap Bot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #0b0f16;
+      --panel: #111827;
+      --card: #161f30;
+      --accent: #56d7ff;
+      --accent-2: #7f5af0;
+      --text: #e5e7eb;
+      --muted: #8b9db8;
+      --danger: #ff6b6b;
+      --success: #7bd88f;
+      --warn: #fbbf24;
+      --border: rgba(255,255,255,0.08);
+      --shadow: 0 20px 50px rgba(0,0,0,0.35);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 1200px;
+      background: radial-gradient(circle at 20% 20%, rgba(127,90,240,0.08), transparent 35%),
+                  radial-gradient(circle at 80% 0%, rgba(86,215,255,0.07), transparent 40%),
+                  var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
+      letter-spacing: 0.01em;
+    }
+    .page { max-width: 1400px; margin: 24px auto 48px; padding: 0 28px; }
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .title {
+      display: flex; align-items: center; gap: 14px;
+      font-size: 28px; font-weight: 700;
+    }
+    .title span {
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .status-bar { display: flex; gap: 10px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 14px; border-radius: 12px;
+      background: var(--card); border: 1px solid var(--border);
+      font-size: 13px; color: var(--text);
+      box-shadow: var(--shadow);
+    }
+    .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
+    .dot.ok { background: var(--success); box-shadow: 0 0 0 6px rgba(123,216,143,0.12); }
+    .dot.warn { background: var(--warn); box-shadow: 0 0 0 6px rgba(251,191,36,0.12); }
+    .dot.err { background: var(--danger); box-shadow: 0 0 0 6px rgba(255,107,107,0.12); }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+    .card h3 { margin: 0 0 8px; font-size: 15px; color: var(--muted); font-weight: 600; }
+    .value { font-size: 26px; font-weight: 700; }
+    .muted { color: var(--muted); font-size: 12px; }
+    .row { display: flex; align-items: center; justify-content: space-between; }
+    .stack { display: flex; flex-direction: column; gap: 6px; }
+
+    .panels { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; margin-bottom: 16px; }
+    canvas { width: 100%; height: 280px; }
+
+    .logs { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); }
+    .logs h3 { margin: 0 0 12px; color: var(--muted); font-size: 15px; }
+    .log-list { max-height: 240px; overflow-y: auto; padding-right: 6px; }
+    .log-item { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 8px; background: rgba(255,255,255,0.03); }
+    .log-item:last-child { margin-bottom: 0; }
+    .log-time { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
+    .log-msg { margin-top: 4px; font-size: 13px; }
+
+    .footnote { margin-top: 12px; color: var(--muted); font-size: 12px; text-align: right; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div class="title">Painel Zap Bot <span>desktop-only</span></div>
+      <div class="status-bar">
+        <div class="chip"><span class="dot" id="bot-dot"></span><div>Bot <strong id="bot-status">-</strong></div></div>
+        <div class="chip"><span class="dot" id="wa-dot"></span><div>WhatsApp <strong id="wa-status">-</strong></div></div>
+        <div class="chip"><span class="dot" id="api-dot"></span><div>API Groq <strong id="api-status">-</strong></div></div>
+      </div>
+    </header>
+
+    <section class="grid">
+      <div class="card stack">
+        <h3>Tempo de atividade</h3>
+        <div class="value" id="uptime">-</div>
+        <div class="muted" id="timestamp">-</div>
+      </div>
+      <div class="card stack">
+        <h3>Conversas únicas</h3>
+        <div class="value" id="conversas">-</div>
+        <div class="muted">Chats distintos atendidos</div>
+      </div>
+      <div class="card stack">
+        <h3>Mensagens processadas</h3>
+        <div class="value" id="mensagens">-</div>
+        <div class="muted">Inclui comandos e respostas IA</div>
+      </div>
+      <div class="card stack">
+        <h3>Latência Groq</h3>
+        <div class="value" id="latencia">-</div>
+        <div class="muted" id="groq-meta">-</div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <div class="card stack">
+        <h3>Memória (RSS)</h3>
+        <div class="value" id="mem-rss">-</div>
+        <div class="muted" id="mem-heap">-</div>
+      </div>
+      <div class="card stack">
+        <h3>Peso da sessão</h3>
+        <div class="value" id="sessao">-</div>
+        <div class="muted">Diretório _IGNORE_session</div>
+      </div>
+      <div class="card stack">
+        <h3>Cache</h3>
+        <div class="value" id="cache">-</div>
+        <div class="muted">Diretório _IGNORE_BOT</div>
+      </div>
+      <div class="card stack">
+        <h3>Groq status</h3>
+        <div class="value" id="groq-status">-</div>
+        <div class="muted" id="groq-last">-</div>
+      </div>
+    </section>
+
+    <section class="panels">
+      <div class="card">
+        <div class="row" style="margin-bottom:10px;">
+          <h3 style="margin:0;">Tráfego e API</h3>
+          <span class="muted" id="chart-hint">Atualizando...</span>
+        </div>
+        <canvas id="chart"></canvas>
+      </div>
+      <div class="card logs">
+        <h3>Logs de erros recentes</h3>
+        <div class="log-list" id="logs"></div>
+      </div>
+    </section>
+    <div class="footnote">Autenticado como zap-bot@admuser.org · Dados em tempo real</div>
+  </div>
+
+  <script>
+    const botDot = document.getElementById('bot-dot');
+    const waDot = document.getElementById('wa-dot');
+    const apiDot = document.getElementById('api-dot');
+    const botStatusEl = document.getElementById('bot-status');
+    const waStatusEl = document.getElementById('wa-status');
+    const apiStatusEl = document.getElementById('api-status');
+
+    const uptimeEl = document.getElementById('uptime');
+    const timestampEl = document.getElementById('timestamp');
+    const conversasEl = document.getElementById('conversas');
+    const mensagensEl = document.getElementById('mensagens');
+    const latenciaEl = document.getElementById('latencia');
+    const groqMetaEl = document.getElementById('groq-meta');
+    const memRssEl = document.getElementById('mem-rss');
+    const memHeapEl = document.getElementById('mem-heap');
+    const sessaoEl = document.getElementById('sessao');
+    const cacheEl = document.getElementById('cache');
+    const groqStatusEl = document.getElementById('groq-status');
+    const groqLastEl = document.getElementById('groq-last');
+    const logsEl = document.getElementById('logs');
+    const chartHintEl = document.getElementById('chart-hint');
+
+    const chartCtx = document.getElementById('chart').getContext('2d');
+    const chartData = {
+      labels: [],
+      datasets: [
+        { label: 'Mensagens', borderColor: '#56d7ff', backgroundColor: 'rgba(86,215,255,0.15)', data: [], tension: 0.35, fill: true },
+        { label: 'Conversas', borderColor: '#7f5af0', backgroundColor: 'rgba(127,90,240,0.10)', data: [], tension: 0.35, fill: true },
+        { label: 'Latência Groq (ms)', borderColor: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.08)', data: [], tension: 0.35, fill: true, yAxisID: 'y1' }
+      ]
+    };
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9fb3c8' } },
+        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#fbbf24' } },
+        x: { ticks: { color: '#9fb3c8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+      },
+      plugins: {
+        legend: { labels: { color: '#e5e7eb' } },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      interaction: { mode: 'index', intersect: false }
+    };
+    const chart = new Chart(chartCtx, { type: 'line', data: chartData, options: chartOptions });
+
+    function setDot(el, status) {
+      el.classList.remove('ok', 'warn', 'err');
+      if (status === 'ok') el.classList.add('ok');
+      else if (status === 'warn') el.classList.add('warn');
+      else el.classList.add('err');
+    }
+
+    function fmtBytes(n) {
+      if (n === null || n === undefined) return '-';
+      const units = ['B','KB','MB','GB'];
+      let v = n; let i = 0;
+      while (v >= 1024 && i < units.length-1) { v /= 1024; i++; }
+      return `${v.toFixed(1)} ${units[i]}`;
+    }
+
+    function fmtLatency(ms) {
+      if (!ms && ms !== 0) return '-';
+      if (ms < 1000) return `${ms} ms`;
+      return `${(ms/1000).toFixed(2)} s`;
+    }
+
+    function updateUI(data) {
+      const botOk = data.connected;
+      const waOk = data.whatsappState && data.whatsappState.toLowerCase().includes('open') || data.whatsappState === 'connected';
+      const apiOk = data.groq?.status === 'ok';
+
+      botStatusEl.textContent = botOk ? 'Online' : 'Offline';
+      waStatusEl.textContent = data.whatsappState || '-';
+      apiStatusEl.textContent = data.groq?.status || '-';
+
+      setDot(botDot, botOk ? 'ok' : 'err');
+      setDot(waDot, waOk ? 'ok' : 'warn');
+      setDot(apiDot, apiOk ? 'ok' : 'err');
+
+      uptimeEl.textContent = data.uptime || '-';
+      timestampEl.textContent = `Atualizado: ${new Date(data.timestamp).toLocaleTimeString()}`;
+      conversasEl.textContent = data.conversationCount ?? '-';
+      mensagensEl.textContent = data.messageCount ?? '-';
+      latenciaEl.textContent = fmtLatency(data.groq?.latencyMs);
+      groqMetaEl.textContent = `Chamadas com erro: ${data.groq?.errorCount ?? 0}`;
+
+      memRssEl.textContent = fmtBytes(data.memory?.rssBytes);
+      memHeapEl.textContent = `Heap: ${fmtBytes(data.memory?.heapUsedBytes)}`;
+      sessaoEl.textContent = fmtBytes(data.storage?.sessionDirSizeBytes);
+      cacheEl.textContent = fmtBytes(data.storage?.cacheDirSizeBytes);
+      groqStatusEl.textContent = data.groq?.status || '-';
+      groqLastEl.textContent = data.groq?.lastCallTs ? `Última chamada: ${new Date(data.groq.lastCallTs).toLocaleTimeString()}` : 'Sem chamadas recentes';
+
+      renderLogs(data.errors || []);
+      pushChartPoint(data);
+    }
+
+    function renderLogs(logs) {
+      logsEl.innerHTML = '';
+      if (!logs.length) {
+        const empty = document.createElement('div');
+        empty.className = 'muted';
+        empty.textContent = 'Sem erros registrados.';
+        logsEl.appendChild(empty);
+        return;
+      }
+      logs.forEach(log => {
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        const time = document.createElement('div');
+        time.className = 'log-time';
+        time.textContent = log.ts || '-';
+        const msg = document.createElement('div');
+        msg.className = 'log-msg';
+        msg.textContent = log.message || '-';
+        if (log.detail) {
+          const detail = document.createElement('div');
+          detail.className = 'muted';
+          detail.style.fontSize = '11px';
+          detail.textContent = log.detail;
+          item.appendChild(detail);
+        }
+        item.appendChild(time);
+        item.appendChild(msg);
+        logsEl.appendChild(item);
+      });
+    }
+
+    function pushChartPoint(data) {
+      const label = new Date(data.timestamp).toLocaleTimeString();
+      chartData.labels.push(label);
+      chartData.datasets[0].data.push(data.messageCount || 0);
+      chartData.datasets[1].data.push(data.conversationCount || 0);
+      chartData.datasets[2].data.push(data.groq?.latencyMs || 0);
+
+      const maxPoints = 30;
+      if (chartData.labels.length > maxPoints) {
+        chartData.labels.shift();
+        chartData.datasets.forEach(ds => ds.data.shift());
+      }
+      chart.update('none');
+      chartHintEl.textContent = 'Streaming em tempo real';
+    }
+
+    async function poll() {
+      try {
+        const res = await fetch('/api/status');
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        updateUI(data);
+      } catch (err) {
+        chartHintEl.textContent = 'Falha ao atualizar';
+        setDot(botDot, 'err');
+        setDot(apiDot, 'err');
+        console.error(err);
+      } finally {
+        setTimeout(poll, 2500);
+      }
+    }
+
+    poll();
+  </script>
+</body>
+</html>

@@ -1,1 +1,10 @@
 node_modules
+
+# credenciais locais
+.env
+
+# managed by open-wa
+**.data.json
+**.node-persist**
+**_IGNORE_**
+# end managed by open-wa
