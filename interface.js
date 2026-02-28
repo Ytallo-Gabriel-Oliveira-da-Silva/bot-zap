@@ -13,6 +13,7 @@ app.get('/', (_req, res) => {
 
 app.get('/api/status', async (_req, res) => {
   try {
+    res.set('Access-Control-Allow-Origin', '*');
     const metrics = await getMetrics();
     res.json({ ...metrics, botStatus: getBotStatus() });
   } catch (err) {

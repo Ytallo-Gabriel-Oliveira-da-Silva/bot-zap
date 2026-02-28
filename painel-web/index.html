@@ -4,102 +4,110 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel Zap Bot</title>
+  <title>Painel WY Bot</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     :root {
-      --bg: #0b0f16;
-      --panel: #111827;
-      --card: #161f30;
-      --accent: #56d7ff;
-      --accent-2: #7f5af0;
-      --text: #e5e7eb;
-      --muted: #8b9db8;
+      --bg: #05070d;
+      --panel: #0c111b;
+      --card: #0f1729;
+      --accent: #66e0ff;
+      --accent-2: #8b7bff;
+      --accent-3: #2dd4bf;
+      --text: #e9edf7;
+      --muted: #92a3c4;
       --danger: #ff6b6b;
       --success: #7bd88f;
-      --warn: #fbbf24;
+      --warn: #facc15;
       --border: rgba(255,255,255,0.08);
-      --shadow: 0 20px 50px rgba(0,0,0,0.35);
+      --shadow: 0 25px 60px rgba(0,0,0,0.35);
     }
-
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      min-width: 1200px;
-      background: radial-gradient(circle at 20% 20%, rgba(127,90,240,0.08), transparent 35%),
-                  radial-gradient(circle at 80% 0%, rgba(86,215,255,0.07), transparent 40%),
-                  var(--bg);
+      background: radial-gradient(circle at 20% 20%, rgba(102,224,255,0.08), transparent 32%),
+                  radial-gradient(circle at 80% 0%, rgba(139,123,255,0.08), transparent 40%),
+                  linear-gradient(145deg, #05070d 0%, #070a12 45%, #05070d 100%);
       color: var(--text);
       font-family: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
-      letter-spacing: 0.01em;
+      min-height: 100vh;
+      overflow-x: hidden;
     }
-    .page { max-width: 1400px; margin: 24px auto 48px; padding: 0 28px; }
+    .page { max-width: 1440px; margin: 28px auto 64px; padding: 0 32px; position: relative; }
     header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
-    .title {
-      display: flex; align-items: center; gap: 14px;
-      font-size: 28px; font-weight: 700;
-    }
-    .title span {
-      padding: 6px 10px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.04);
-      border-radius: 8px;
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .status-bar { display: flex; gap: 10px; }
-    .chip {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 10px 14px; border-radius: 12px;
-      background: var(--card); border: 1px solid var(--border);
-      font-size: 13px; color: var(--text);
-      box-shadow: var(--shadow);
-    }
+    .title { display: flex; align-items: center; gap: 12px; font-size: 28px; font-weight: 700; letter-spacing: 0.3px; }
+    .badge { padding: 6px 10px; border: 1px solid var(--border); background: rgba(255,255,255,0.05); border-radius: 8px; font-size: 12px; color: var(--muted); }
+    nav { display: flex; gap: 10px; }
+    .tab { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--card); color: var(--text); cursor: pointer; transition: all 0.2s ease; font-weight: 600; }
+    .tab.active { background: linear-gradient(120deg, rgba(102,224,255,0.2), rgba(139,123,255,0.15)); border-color: rgba(255,255,255,0.18); box-shadow: var(--shadow); }
+
+    .status-bar { display: flex; gap: 12px; }
+    .chip { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; background: var(--card); border: 1px solid var(--border); font-size: 13px; color: var(--text); box-shadow: var(--shadow); }
     .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
     .dot.ok { background: var(--success); box-shadow: 0 0 0 6px rgba(123,216,143,0.12); }
-    .dot.warn { background: var(--warn); box-shadow: 0 0 0 6px rgba(251,191,36,0.12); }
+    .dot.warn { background: var(--warn); box-shadow: 0 0 0 6px rgba(250,204,21,0.12); }
     .dot.err { background: var(--danger); box-shadow: 0 0 0 6px rgba(255,107,107,0.12); }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
-      box-shadow: var(--shadow);
-    }
-    .card h3 { margin: 0 0 8px; font-size: 15px; color: var(--muted); font-weight: 600; }
-    .value { font-size: 26px; font-weight: 700; }
-    .muted { color: var(--muted); font-size: 12px; }
-    .row { display: flex; align-items: center; justify-content: space-between; }
-    .stack { display: flex; flex-direction: column; gap: 6px; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+    .card::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(145deg, rgba(102,224,255,0.07), rgba(139,123,255,0.03)); opacity: 0.7; }
+    .card h3 { margin: 0 0 8px; font-size: 15px; color: var(--muted); font-weight: 600; position: relative; z-index: 1; }
+    .value { font-size: 26px; font-weight: 700; position: relative; z-index: 1; }
+    .muted { color: var(--muted); font-size: 12px; position: relative; z-index: 1; }
+    .row { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+    .stack { display: flex; flex-direction: column; gap: 6px; position: relative; z-index: 1; }
 
-    .panels { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; margin-bottom: 16px; }
-    canvas { width: 100%; height: 280px; }
+    .panels { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 16px; margin-bottom: 16px; align-items: stretch; }
+    .chart-wrap { height: 320px; }
+    canvas { width: 100%; height: 100%; max-height: 320px; }
 
-    .logs { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); }
-    .logs h3 { margin: 0 0 12px; color: var(--muted); font-size: 15px; }
-    .log-list { max-height: 240px; overflow-y: auto; padding-right: 6px; }
-    .log-item { padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 8px; background: rgba(255,255,255,0.03); }
-    .log-item:last-child { margin-bottom: 0; }
-    .log-time { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--muted); }
-    .log-msg { margin-top: 4px; font-size: 13px; }
+    .terminal { background: #0a0f18; border: 1px solid var(--border); border-radius: 14px; padding: 0; box-shadow: var(--shadow); overflow: hidden; }
+    .term-bar { background: #0d1420; padding: 10px 12px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+    .term-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .term-dot.red { background: #ff5f56; }
+    .term-dot.yellow { background: #ffbd2e; }
+    .term-dot.green { background: #27c93f; }
+    .term-title { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); }
+    .term-body { padding: 12px; max-height: 320px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #dbeafe; background: linear-gradient(180deg, rgba(12,17,32,0.7), rgba(12,17,32,0.9)); }
+    .term-line { margin-bottom: 6px; white-space: pre-wrap; }
+    .term-line.ok { color: #8ef3c5; }
+    .term-line.err { color: #ff7b7b; }
+    .term-line.warn { color: #fcd34d; }
 
     .footnote { margin-top: 12px; color: var(--muted); font-size: 12px; text-align: right; }
+    footer { margin: 32px auto 0; padding: 12px 0 24px; color: var(--muted); font-size: 12px; text-align: center; opacity: 0.8; }
+
+    .hidden { display: none; }
+    .view { animation: fade 0.25s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* Auth overlay */
+    .lock-screen { position: fixed; inset: 0; backdrop-filter: blur(12px); background: rgba(5,7,13,0.78); display: flex; align-items: center; justify-content: center; z-index: 50; }
+    .lock-card { width: 420px; background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 28px; box-shadow: var(--shadow); text-align: center; }
+    .lock-card h2 { margin: 0 0 6px; font-size: 22px; }
+    .lock-card p { margin: 0 0 16px; color: var(--muted); }
+    .lock-input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--border); background: #0a0f18; color: var(--text); font-size: 14px; }
+    .lock-btn { width: 100%; margin-top: 12px; padding: 12px 14px; border-radius: 10px; border: none; background: linear-gradient(120deg, #66e0ff, #8b7bff); color: #05070d; font-weight: 700; cursor: pointer; box-shadow: var(--shadow); }
+    .lock-err { color: var(--danger); font-size: 13px; margin-top: 8px; min-height: 18px; }
   </style>
 </head>
 <body>
-  <div class="page">
+  <div class="lock-screen" id="lock">
+    <div class="lock-card">
+      <h2>Acesso restrito</h2>
+      <p>Informe a senha do painel para visualizar os dados do WY Bot.</p>
+      <input class="lock-input" type="password" id="lock-pass" placeholder="Senha do painel" autocomplete="off" />
+      <button class="lock-btn" id="lock-btn">Entrar</button>
+      <div class="lock-err" id="lock-err"></div>
+    </div>
+  </div>
+
+  <div class="page" id="page" style="filter: blur(6px); pointer-events:none;">
     <header>
-      <div class="title">Painel Zap Bot <span>desktop-only</span></div>
+      <div class="title">WY Bot · Painel <span class="badge">acesso restrito</span></div>
       <div class="status-bar">
         <div class="chip"><span class="dot" id="bot-dot"></span><div>Bot <strong id="bot-status">-</strong></div></div>
         <div class="chip"><span class="dot" id="wa-dot"></span><div>WhatsApp <strong id="wa-status">-</strong></div></div>
@@ -107,69 +115,120 @@
       </div>
     </header>
 
-    <section class="grid">
-      <div class="card stack">
-        <h3>Tempo de atividade</h3>
-        <div class="value" id="uptime">-</div>
-        <div class="muted" id="timestamp">-</div>
-      </div>
-      <div class="card stack">
-        <h3>Conversas únicas</h3>
-        <div class="value" id="conversas">-</div>
-        <div class="muted">Chats distintos atendidos</div>
-      </div>
-      <div class="card stack">
-        <h3>Mensagens processadas</h3>
-        <div class="value" id="mensagens">-</div>
-        <div class="muted">Inclui comandos e respostas IA</div>
-      </div>
-      <div class="card stack">
-        <h3>Latência Groq</h3>
-        <div class="value" id="latencia">-</div>
-        <div class="muted" id="groq-meta">-</div>
-      </div>
-    </section>
-
-    <section class="grid">
-      <div class="card stack">
-        <h3>Memória (RSS)</h3>
-        <div class="value" id="mem-rss">-</div>
-        <div class="muted" id="mem-heap">-</div>
-      </div>
-      <div class="card stack">
-        <h3>Peso da sessão</h3>
-        <div class="value" id="sessao">-</div>
-        <div class="muted">Diretório _IGNORE_session</div>
-      </div>
-      <div class="card stack">
-        <h3>Cache</h3>
-        <div class="value" id="cache">-</div>
-        <div class="muted">Diretório _IGNORE_BOT</div>
-      </div>
-      <div class="card stack">
-        <h3>Groq status</h3>
-        <div class="value" id="groq-status">-</div>
-        <div class="muted" id="groq-last">-</div>
-      </div>
-    </section>
-
-    <section class="panels">
-      <div class="card">
-        <div class="row" style="margin-bottom:10px;">
-          <h3 style="margin:0;">Tráfego e API</h3>
-          <span class="muted" id="chart-hint">Atualizando...</span>
+    <nav>
+      <div class="tab active" data-view="dashboard">Dashboard</div>
+      <div class="tab" data-view="logs">Logs</div>
+      <div class="tab" data-view="infra">Infra</div>
+    </nav>
+<br>
+    <section class="view" id="view-dashboard">
+      <div class="grid">
+        <div class="card stack">
+          <h3>Tempo de atividade</h3>
+          <div class="value" id="uptime">-</div>
+          <div class="muted" id="timestamp">-</div>
         </div>
-        <canvas id="chart"></canvas>
+        <div class="card stack">
+          <h3>Conversas únicas</h3>
+          <div class="value" id="conversas">-</div>
+          <div class="muted">Chats distintos atendidos</div>
+        </div>
+        <div class="card stack">
+          <h3>Mensagens processadas</h3>
+          <div class="value" id="mensagens">-</div>
+          <div class="muted">Comandos + IA</div>
+        </div>
+        <div class="card stack">
+          <h3>Latência Groq</h3>
+          <div class="value" id="latencia">-</div>
+          <div class="muted" id="groq-meta">-</div>
+        </div>
       </div>
-      <div class="card logs">
-        <h3>Logs de erros recentes</h3>
-        <div class="log-list" id="logs"></div>
+
+      <div class="grid">
+        <div class="card stack">
+          <h3>Memória (RSS)</h3>
+          <div class="value" id="mem-rss">-</div>
+          <div class="muted" id="mem-heap">-</div>
+        </div>
+        <div class="card stack">
+          <h3>Peso da sessão</h3>
+          <div class="value" id="sessao">-</div>
+          <div class="muted">Diretório _IGNORE_session</div>
+        </div>
+        <div class="card stack">
+          <h3>Cache</h3>
+          <div class="value" id="cache">-</div>
+          <div class="muted">Diretório _IGNORE_BOT</div>
+        </div>
+        <div class="card stack">
+          <h3>Groq status</h3>
+          <div class="value" id="groq-status">-</div>
+          <div class="muted" id="groq-last">-</div>
+        </div>
+      </div>
+
+      <div class="panels">
+        <div class="card">
+          <div class="row" style="margin-bottom:10px;">
+            <h3 style="margin:0;">Tráfego e API</h3>
+            <span class="muted" id="chart-hint">Atualizando...</span>
+          </div>
+          <div class="chart-wrap"><canvas id="chart"></canvas></div>
+        </div>
+        <div class="card stack">
+          <h3>Operação</h3>
+          <div class="value" id="op-mode">-</div>
+          <div class="muted" id="op-notes">-</div>
+          <h3 style="margin-top:16px;">Estado WhatsApp</h3>
+          <div class="muted" id="wa-detail">-</div>
+          <h3 style="margin-top:16px;">API Groq</h3>
+          <div class="muted" id="api-detail">-</div>
+        </div>
       </div>
     </section>
-    <div class="footnote">Autenticado como zap-bot@admuser.org · Dados em tempo real</div>
+
+    <section class="view hidden" id="view-logs">
+      <div class="terminal">
+        <div class="term-bar">
+          <span class="term-dot red"></span><span class="term-dot yellow"></span><span class="term-dot green"></span>
+          <span class="term-title">/var/log/wy-bot.log</span>
+        </div>
+        <div class="term-body" id="term-body"></div>
+      </div>
+    </section>
+
+    <section class="view hidden" id="view-infra">
+      <div class="grid">
+        <div class="card stack">
+          <h3>Host</h3>
+          <div class="value" id="host-ip">-</div>
+          <div class="muted" id="host-meta">-</div>
+        </div>
+        <div class="card stack">
+          <h3>Memória</h3>
+          <div class="value" id="host-mem">-</div>
+          <div class="muted" id="host-mem-detail">-</div>
+        </div>
+        <div class="card stack">
+          <h3>WhatsApp</h3>
+          <div class="value" id="host-wa">-</div>
+          <div class="muted" id="host-wa-detail">-</div>
+        </div>
+        <div class="card stack">
+          <h3>API Groq</h3>
+          <div class="value" id="host-groq">-</div>
+          <div class="muted" id="host-groq-detail">-</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="footnote" id="footnote">Acesso restrito · Dados protegidos</div>
   </div>
+  <footer>WY Bot · Painel seguro · Origem dos dados: <span id="api-endpoint">-</span></footer>
 
   <script>
+    const PANEL_SECRET = 'BotAi2026@'; // senha definida pelo admin
     const botDot = document.getElementById('bot-dot');
     const waDot = document.getElementById('wa-dot');
     const apiDot = document.getElementById('api-dot');
@@ -189,16 +248,30 @@
     const cacheEl = document.getElementById('cache');
     const groqStatusEl = document.getElementById('groq-status');
     const groqLastEl = document.getElementById('groq-last');
-    const logsEl = document.getElementById('logs');
     const chartHintEl = document.getElementById('chart-hint');
+    const opModeEl = document.getElementById('op-mode');
+    const opNotesEl = document.getElementById('op-notes');
+    const waDetailEl = document.getElementById('wa-detail');
+    const apiDetailEl = document.getElementById('api-detail');
+    const footnoteEl = document.getElementById('footnote');
+    const termBody = document.getElementById('term-body');
+    const hostIpEl = document.getElementById('host-ip');
+    const hostMetaEl = document.getElementById('host-meta');
+    const hostMemEl = document.getElementById('host-mem');
+    const hostMemDetailEl = document.getElementById('host-mem-detail');
+    const hostWaEl = document.getElementById('host-wa');
+    const hostWaDetailEl = document.getElementById('host-wa-detail');
+    const hostGroqEl = document.getElementById('host-groq');
+    const hostGroqDetailEl = document.getElementById('host-groq-detail');
 
     const chartCtx = document.getElementById('chart').getContext('2d');
+    const apiEndpointEl = document.getElementById('api-endpoint');
     const chartData = {
       labels: [],
       datasets: [
-        { label: 'Mensagens', borderColor: '#56d7ff', backgroundColor: 'rgba(86,215,255,0.15)', data: [], tension: 0.35, fill: true },
-        { label: 'Conversas', borderColor: '#7f5af0', backgroundColor: 'rgba(127,90,240,0.10)', data: [], tension: 0.35, fill: true },
-        { label: 'Latência Groq (ms)', borderColor: '#fbbf24', backgroundColor: 'rgba(251,191,36,0.08)', data: [], tension: 0.35, fill: true, yAxisID: 'y1' }
+        { label: 'Mensagens', borderColor: '#66e0ff', backgroundColor: 'rgba(102,224,255,0.12)', data: [], tension: 0.35, fill: true },
+        { label: 'Conversas', borderColor: '#8b7bff', backgroundColor: 'rgba(139,123,255,0.10)', data: [], tension: 0.35, fill: true },
+        { label: 'Latência Groq (ms)', borderColor: '#facc15', backgroundColor: 'rgba(250,204,21,0.10)', data: [], tension: 0.35, fill: true, yAxisID: 'y1' }
       ]
     };
     const chartOptions = {
@@ -206,13 +279,10 @@
       maintainAspectRatio: false,
       scales: {
         y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#9fb3c8' } },
-        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#fbbf24' } },
+        y1: { beginAtZero: true, position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#facc15' } },
         x: { ticks: { color: '#9fb3c8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
       },
-      plugins: {
-        legend: { labels: { color: '#e5e7eb' } },
-        tooltip: { mode: 'index', intersect: false }
-      },
+      plugins: { legend: { labels: { color: '#e5e7eb' } }, tooltip: { mode: 'index', intersect: false } },
       interaction: { mode: 'index', intersect: false }
     };
     const chart = new Chart(chartCtx, { type: 'line', data: chartData, options: chartOptions });
@@ -240,7 +310,7 @@
 
     function updateUI(data) {
       const botOk = data.connected;
-      const waOk = data.whatsappState && data.whatsappState.toLowerCase().includes('open') || data.whatsappState === 'connected';
+      const waOk = (data.whatsappState && data.whatsappState.toLowerCase().includes('open')) || data.whatsappState === 'connected';
       const apiOk = data.groq?.status === 'ok';
 
       botStatusEl.textContent = botOk ? 'Online' : 'Offline';
@@ -265,39 +335,50 @@
       groqStatusEl.textContent = data.groq?.status || '-';
       groqLastEl.textContent = data.groq?.lastCallTs ? `Última chamada: ${new Date(data.groq.lastCallTs).toLocaleTimeString()}` : 'Sem chamadas recentes';
 
+      opModeEl.textContent = data.whatsappState || '-';
+      opNotesEl.textContent = data.botStatus || '-';
+      waDetailEl.textContent = `Estado: ${data.whatsappState || 'n/d'} | Conectado: ${data.connected ? 'sim' : 'não'}`;
+      apiDetailEl.textContent = `Groq: ${data.groq?.status || 'n/d'} | Latência: ${fmtLatency(data.groq?.latencyMs)}`;
+      footnoteEl.textContent = `Atualizado ${new Date(data.timestamp).toLocaleTimeString()}`;
+
       renderLogs(data.errors || []);
       pushChartPoint(data);
+      renderInfra(data);
+      renderTerminal(data.errors || []);
     }
 
     function renderLogs(logs) {
-      logsEl.innerHTML = '';
+      // Reuso da área de erros (dashboard)
+      const logsBox = document.getElementById('logs-box');
+      if (!logsBox) return;
+    }
+
+    function renderTerminal(logs) {
+      termBody.innerHTML = '';
       if (!logs.length) {
-        const empty = document.createElement('div');
-        empty.className = 'muted';
-        empty.textContent = 'Sem erros registrados.';
-        logsEl.appendChild(empty);
+        termBody.innerHTML = '<div class="term-line">[info] Sem logs recentes.</div>';
         return;
       }
-      logs.forEach(log => {
-        const item = document.createElement('div');
-        item.className = 'log-item';
-        const time = document.createElement('div');
-        time.className = 'log-time';
-        time.textContent = log.ts || '-';
-        const msg = document.createElement('div');
-        msg.className = 'log-msg';
-        msg.textContent = log.message || '-';
-        if (log.detail) {
-          const detail = document.createElement('div');
-          detail.className = 'muted';
-          detail.style.fontSize = '11px';
-          detail.textContent = log.detail;
-          item.appendChild(detail);
-        }
-        item.appendChild(time);
-        item.appendChild(msg);
-        logsEl.appendChild(item);
+      logs.slice(0, 60).forEach(l => {
+        const line = document.createElement('div');
+        const level = l.level || (l.detail ? 'error' : 'warn');
+        line.className = 'term-line ' + (level === 'error' ? 'err' : level === 'warn' ? 'warn' : 'ok');
+        line.textContent = `[${l.ts || '-'}] [${level}] ${l.message || ''}${l.detail ? ' | ' + l.detail : ''}`;
+        termBody.appendChild(line);
       });
+      termBody.scrollTop = termBody.scrollHeight;
+    }
+
+    function renderInfra(data) {
+      hostIpEl.textContent = data?.host?.ip || 'n/d';
+      hostMetaEl.textContent = `${data?.host?.hostname || 'host'} · ${data?.host?.platform || 'n/d'} · carga ${data?.host?.load ?? '-'}`;
+      const total = data?.host?.memory?.totalBytes; const free = data?.host?.memory?.freeBytes;
+      hostMemEl.textContent = total ? `${fmtBytes(total)} total` : fmtBytes(data.memory?.rssBytes);
+      hostMemDetailEl.textContent = free ? `Livre: ${fmtBytes(free)} · RSS: ${fmtBytes(data.memory?.rssBytes)}` : `Heap: ${fmtBytes(data.memory?.heapUsedBytes)} | External: ${fmtBytes(data.memory?.externalBytes)}`;
+      hostWaEl.textContent = data.whatsappState || '-';
+      hostWaDetailEl.textContent = data.connected ? 'Conectado' : 'Desconectado';
+      hostGroqEl.textContent = data.groq?.status || '-';
+      hostGroqDetailEl.textContent = `Latência: ${fmtLatency(data.groq?.latencyMs)} | Erros: ${data.groq?.errorCount ?? 0}`;
     }
 
     function pushChartPoint(data) {
@@ -306,7 +387,6 @@
       chartData.datasets[0].data.push(data.messageCount || 0);
       chartData.datasets[1].data.push(data.conversationCount || 0);
       chartData.datasets[2].data.push(data.groq?.latencyMs || 0);
-
       const maxPoints = 30;
       if (chartData.labels.length > maxPoints) {
         chartData.labels.shift();
@@ -316,23 +396,75 @@
       chartHintEl.textContent = 'Streaming em tempo real';
     }
 
+    let authed = false;
+    let apiBase = null;
+
+    async function fetchStatus() {
+      const candidates = apiBase ? [apiBase] : ['/api/status', 'http://localhost:3000/api/status'];
+      for (const base of candidates) {
+        try {
+          const res = await fetch(base, { cache: 'no-store' });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          apiBase = base;
+          apiEndpointEl.textContent = base;
+          return await res.json();
+        } catch (err) {
+          // try next
+        }
+      }
+      throw new Error('Nenhum endpoint /api/status respondeu');
+    }
+    function unlock() {
+      document.getElementById('lock').style.display = 'none';
+      const pg = document.getElementById('page');
+      pg.style.filter = 'none';
+      pg.style.pointerEvents = 'auto';
+      authed = true;
+      poll();
+    }
+
+    document.getElementById('lock-btn').onclick = () => {
+      const val = document.getElementById('lock-pass').value;
+      const err = document.getElementById('lock-err');
+      if (!val) { err.textContent = 'Informe a senha.'; return; }
+      if (val === PANEL_SECRET) {
+        localStorage.setItem('wy-panel-ok', '1');
+        unlock();
+      } else {
+        err.textContent = 'Senha inválida.';
+      }
+    };
+
+    if (localStorage.getItem('wy-panel-ok') === '1') {
+      unlock();
+    }
+
     async function poll() {
+      if (!authed) return;
       try {
-        const res = await fetch('/api/status');
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
+        const data = await fetchStatus();
         updateUI(data);
       } catch (err) {
         chartHintEl.textContent = 'Falha ao atualizar';
         setDot(botDot, 'err');
         setDot(apiDot, 'err');
-        console.error(err);
+        termBody.innerHTML += `\n[err] ${err.message}`;
+        termBody.scrollTop = termBody.scrollHeight;
       } finally {
         setTimeout(poll, 2500);
       }
     }
 
-    poll();
+    // navegação
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const view = tab.dataset.view;
+        document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
+        document.getElementById('view-' + view).classList.remove('hidden');
+      });
+    });
   </script>
 </body>
 </html>
