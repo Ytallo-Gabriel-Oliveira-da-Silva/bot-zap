@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const { create } = require('@open-wa/wa-automate');
 const axios = require('axios');
+const puppeteer = require('puppeteer');
 const os = require('os');
 
 const WY_CONFIG = {
@@ -206,7 +207,8 @@ function createClient() {
     blockCrashLogs: true,
     disableSpins: true,
     headless: true,
-    useChrome: true,
+    useChrome: false, // usar o Chromium do puppeteer para evitar CHROME_PATH
+    executablePath: puppeteer.executablePath(),
     qrTimeout: 0
   });
 }
