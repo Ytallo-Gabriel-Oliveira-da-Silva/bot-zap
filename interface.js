@@ -2,7 +2,7 @@ const express = require('express');
 const path = require('path');
 const app = express();
 const http = require('http').createServer(app);
-const { startBot, getBotStatus, getMetrics } = require('./index');
+const { getBotStatus, getMetrics } = require('./index');
 
 const painelPath = path.join(__dirname, 'painel-web');
 app.use('/painel-web', express.static(painelPath));
@@ -25,6 +25,5 @@ module.exports = { http };
 
 if (require.main === module) {
   const PORT = process.env.PORT || 3000;
-  startBot().catch(() => {});
   http.listen(PORT, () => console.log(`Painel ativo em http://localhost:${PORT}/painel-web/`));
 }
