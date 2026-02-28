@@ -1,6 +1,3 @@
-2025/04/29-16:39:56.564 62c Reusing MANIFEST C:\Users\garra\bot\_IGNORE_BOT\Default\Local Storage\leveldb/MANIFEST-000001
-2025/04/29-16:39:56.568 62c Recovering log #4
-2025/04/29-16:39:56.570 62c Reusing old log C:\Users\garra\bot\_IGNORE_BOT\Default\Local Storage\leveldb/000004.log 
-2025/04/29-16:43:44.486 4c28 Level-0 table #8: started
-2025/04/29-16:43:44.501 4c28 Level-0 table #8: 17059 bytes OK
-2025/04/29-16:43:44.505 4c28 Delete type=0 #4
+2026/02/28-21:42:50.102 933f Reusing MANIFEST /workspaces/bot-zap/_IGNORE_BOT/Default/Local Storage/leveldb/MANIFEST-000001
+2026/02/28-21:42:50.115 933f Recovering log #13
+2026/02/28-21:42:50.117 933f Reusing old log /workspaces/bot-zap/_IGNORE_BOT/Default/Local Storage/leveldb/000013.log 

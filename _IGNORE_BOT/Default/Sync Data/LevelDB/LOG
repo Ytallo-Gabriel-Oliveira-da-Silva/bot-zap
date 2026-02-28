@@ -1,3 +1,3 @@
-2025/04/30-10:40:46.907 234c Reusing MANIFEST C:\Users\garra\bot\_IGNORE_BOT\Default\Sync Data\LevelDB/MANIFEST-000001
-2025/04/30-10:40:46.918 234c Recovering log #3
-2025/04/30-10:40:46.922 234c Reusing old log C:\Users\garra\bot\_IGNORE_BOT\Default\Sync Data\LevelDB/000003.log 
+2026/02/28-22:55:24.308 ea3 Reusing MANIFEST /workspaces/bot-zap/_IGNORE_BOT/Default/Sync Data/LevelDB/MANIFEST-000001
+2026/02/28-22:55:24.875 ea3 Recovering log #3
+2026/02/28-22:55:24.881 ea3 Reusing old log /workspaces/bot-zap/_IGNORE_BOT/Default/Sync Data/LevelDB/000003.log 

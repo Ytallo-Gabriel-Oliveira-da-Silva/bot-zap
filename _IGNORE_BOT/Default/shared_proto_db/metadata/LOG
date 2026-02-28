@@ -1,3 +1,3 @@
-2025/04/30-10:40:46.946 4c64 Reusing MANIFEST C:\Users\garra\bot\_IGNORE_BOT\Default\shared_proto_db\metadata/MANIFEST-000001
-2025/04/30-10:40:46.961 4c64 Recovering log #3
-2025/04/30-10:40:46.961 4c64 Reusing old log C:\Users\garra\bot\_IGNORE_BOT\Default\shared_proto_db\metadata/000003.log 
+2026/02/28-22:55:27.067 ea3 Reusing MANIFEST /workspaces/bot-zap/_IGNORE_BOT/Default/shared_proto_db/metadata/MANIFEST-000001
+2026/02/28-22:55:27.068 ea3 Recovering log #3
+2026/02/28-22:55:27.069 ea3 Reusing old log /workspaces/bot-zap/_IGNORE_BOT/Default/shared_proto_db/metadata/000003.log 
