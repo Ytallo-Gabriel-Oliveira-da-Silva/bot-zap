@@ -11,7 +11,7 @@ const WY_CONFIG = {
   groupName: 'WILLZINHOSTORE',
   groupId: '120363407359840640@g.us',
   assets: {
-    logo: 'img/logo/logo.png',
+    logo: 'img/logo/logo.jpeg',
     bomDia: 'img/comprimentation/good_morning.png',
     boaTarde: 'img/comprimentation/good_afternoon.png',
     boaNoite: 'img/comprimentation/good_night.png',
@@ -26,7 +26,7 @@ const WY_CONFIG = {
   },
   schedule: {
     morningHour: 8,
-    afternoonHour: 13,
+    afternoonHour: 12,
     eveningHour: 18,
     closingHour: 23
   },
