@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 const { create } = require('@open-wa/wa-automate');
 const axios = require('axios');
-const puppeteer = require('puppeteer');
 const os = require('os');
 
 const WY_CONFIG = {
@@ -208,9 +207,7 @@ function createClient() {
     disableSpins: true,
     headless: true,
     useChrome: false,
-    qrTimeout: 0,
-    executablePath: puppeteer.executablePath(),
-    chromiumArgs: ['--no-sandbox', '--disable-setuid-sandbox']
+    qrTimeout: 0
   });
 }
 
