@@ -206,7 +206,7 @@ function createClient() {
     blockCrashLogs: true,
     disableSpins: true,
     headless: true,
-    useChrome: false,
+    useChrome: true,
     qrTimeout: 0
   });
 }
