@@ -1,29 +1,29 @@
-2026/02/28-22:55:32.724 ea3 Reusing MANIFEST /workspaces/bot-zap/_IGNORE_BOT/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
-2026/02/28-22:55:32.735 ea3 Recovering log #6932
-2026/02/28-22:55:32.973 ea3 Reusing old log /workspaces/bot-zap/_IGNORE_BOT/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/006932.log 
-2026/02/28-22:55:34.231 ea5 Level-0 table #6945: started
-2026/02/28-22:55:34.321 ea5 Level-0 table #6945: 479792 bytes OK
-2026/02/28-22:55:34.324 ea5 Delete type=0 #6932
-2026/02/28-22:55:34.324 ea3 Manual compaction at level-0 from '\x00\xaa\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\xab\x00\x00\x00' @ 0 : 0; will stop at (end)
-2026/02/28-22:55:34.424 ea4 Compacting 1@2 + 9@3 files
-2026/02/28-22:55:35.190 ea4 Generated table #6946@2: 63786 keys, 2272427 bytes
-2026/02/28-22:55:35.730 ea4 Generated table #6947@2: 40781 keys, 2198447 bytes
-2026/02/28-22:55:36.003 ea4 Generated table #6948@2: 14687 keys, 2164921 bytes
-2026/02/28-22:55:36.373 ea4 Generated table #6949@2: 15527 keys, 2198029 bytes
-2026/02/28-22:55:36.815 ea4 Generated table #6950@2: 25306 keys, 2212874 bytes
-2026/02/28-22:55:37.204 ea4 Generated table #6951@2: 48038 keys, 2226943 bytes
-2026/02/28-22:55:37.589 ea4 Generated table #6952@2: 36671 keys, 2255086 bytes
-2026/02/28-22:55:37.719 ea4 Generated table #6953@2: 42435 keys, 2184923 bytes
-2026/02/28-22:55:37.766 ea4 Generated table #6954@2: 38957 keys, 860239 bytes
-2026/02/28-22:55:37.767 ea4 Compacted 1@2 + 9@3 files => 18573889 bytes
-2026/02/28-22:55:37.768 ea4 compacted to: files[ 0 0 0 9 0 0 0 ]
-2026/02/28-22:55:37.768 ea4 Delete type=2 #6935
-2026/02/28-22:55:37.769 ea4 Delete type=2 #6938
-2026/02/28-22:55:37.769 ea4 Delete type=2 #6940
-2026/02/28-22:55:37.769 ea4 Delete type=2 #6939
-2026/02/28-22:55:37.769 ea4 Delete type=2 #6941
-2026/02/28-22:55:37.769 ea4 Delete type=2 #6934
-2026/02/28-22:55:37.769 ea4 Delete type=2 #6945
-2026/02/28-22:55:37.769 ea4 Delete type=2 #6942
-2026/02/28-22:55:37.769 ea4 Delete type=2 #6936
-2026/02/28-22:55:37.769 ea4 Delete type=2 #6937
+2026/03/01-00:07:48.686 231e Reusing MANIFEST /workspaces/bot-zap/_IGNORE_BOT/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/03/01-00:07:48.696 231e Recovering log #7009
+2026/03/01-00:07:48.952 231e Reusing old log /workspaces/bot-zap/_IGNORE_BOT/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/007009.log 
+2026/03/01-00:07:50.352 2320 Level-0 table #7022: started
+2026/03/01-00:07:50.427 2320 Level-0 table #7022: 807111 bytes OK
+2026/03/01-00:07:50.430 2320 Delete type=0 #7009
+2026/03/01-00:07:50.431 2320 Manual compaction at level-0 from '\x00\xab\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\xac\x00\x00\x00' @ 0 : 0; will stop at (end)
+2026/03/01-00:07:50.490 231f Compacting 1@2 + 9@3 files
+2026/03/01-00:07:51.174 231f Generated table #7023@2: 73009 keys, 2285196 bytes
+2026/03/01-00:07:51.634 231f Generated table #7024@2: 37652 keys, 2192744 bytes
+2026/03/01-00:07:52.185 231f Generated table #7025@2: 18037 keys, 2169187 bytes
+2026/03/01-00:07:52.723 231f Generated table #7026@2: 13144 keys, 2185463 bytes
+2026/03/01-00:07:53.164 231f Generated table #7027@2: 25774 keys, 2217504 bytes
+2026/03/01-00:07:53.576 231f Generated table #7028@2: 43701 keys, 2221683 bytes
+2026/03/01-00:07:53.966 231f Generated table #7029@2: 40838 keys, 2273467 bytes
+2026/03/01-00:07:54.153 231f Generated table #7030@2: 30217 keys, 2172197 bytes
+2026/03/01-00:07:54.332 231f Generated table #7031@2: 56526 keys, 1244546 bytes
+2026/03/01-00:07:54.333 231f Compacted 1@2 + 9@3 files => 18961987 bytes
+2026/03/01-00:07:54.335 231f compacted to: files[ 0 0 0 9 0 0 0 ]
+2026/03/01-00:07:54.335 231f Delete type=2 #7017
+2026/03/01-00:07:54.335 231f Delete type=2 #7014
+2026/03/01-00:07:54.335 231f Delete type=2 #7018
+2026/03/01-00:07:54.336 231f Delete type=2 #7015
+2026/03/01-00:07:54.336 231f Delete type=2 #7022
+2026/03/01-00:07:54.336 231f Delete type=2 #7012
+2026/03/01-00:07:54.336 231f Delete type=2 #7011
+2026/03/01-00:07:54.337 231f Delete type=2 #7016
+2026/03/01-00:07:54.337 231f Delete type=2 #7019
+2026/03/01-00:07:54.337 231f Delete type=2 #7013
