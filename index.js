@@ -25,10 +25,18 @@ const WY_CONFIG = {
     groupInvite: 'https://chat.whatsapp.com/EnnZJ7ddbwa9Alv9muCRW7?mode=gi_t'
   },
   schedule: {
-    morningHour: 8,
+    morningHour: 10,
     afternoonHour: 12,
     eveningHour: 18,
-    closingHour: 23
+    closingHour: 0
+  },
+  moderation: {
+    enabled: true,
+    apiUrl: process.env.MODERATION_API_URL || 'https://api-inference.huggingface.co/models/NotS0L/NSFW-Detector',
+    apiToken: process.env.MODERATION_API_TOKEN || process.env.HF_API_TOKEN || process.env.HUGGINGFACE_API_TOKEN,
+    nsfwThreshold: 0.6,
+    violenceThreshold: 0.4,
+    maxBytes: 5 * 1024 * 1024
   },
   security: {
     adminWhitelist: [], // opcional: ['5511999999999@c.us']
@@ -238,6 +246,7 @@ async function start(client) {
       const command = body.toLowerCase();
       const groupId = chat?.groupMetadata?.id || (isGroupMsg ? from : null);
       const senderId = sender.id;
+      const messageId = getMessageId(message);
       const botNumber = await client.getHostNumber() + "@c.us";
       const isGroupAdmin = await resolveIsAdmin(client, chat, groupId, senderId);
       const isBotAdmin = await resolveIsAdmin(client, chat, groupId, botNumber);
@@ -268,21 +277,33 @@ async function start(client) {
         return;
       }
 
+      const moderacao = await moderarMidiaSeNecessario(client, {
+        message,
+        mimetype,
+        type,
+        groupId,
+        from,
+        senderId,
+        isGroupAdmin,
+        messageId
+      });
+      if (moderacao === 'blocked') return;
+
       // Anti-link para não admins
       if (!isGroupAdmin && contemLink(body)) {
-        await punir(client, { groupId, targetId: senderId, motivo: 'Envio de link sem permissão', from });
+        await punir(client, { groupId, targetId: senderId, motivo: 'Envio de link sem permissão', from, messageIds: [messageId] });
         return;
       }
 
       // Anti-arquivo (exceto foto/vídeo) para não admins
       if (!isGroupAdmin && isArquivoRestrito(type, mimetype, isViewOnce)) {
-        await punir(client, { groupId, targetId: senderId, motivo: 'Envio de arquivo não permitido', from });
+        await punir(client, { groupId, targetId: senderId, motivo: 'Envio de arquivo não permitido', from, messageIds: [messageId] });
         return;
       }
 
       // Anti-spam: 7 vezes a mesma mensagem
       if (!isGroupAdmin && isSpamRepetido(spamTracker, groupId, senderId, body)) {
-        await punir(client, { groupId, targetId: senderId, motivo: 'Spam detectado (7x mesma mensagem)', from });
+        await punir(client, { groupId, targetId: senderId, motivo: 'Spam detectado (7x mesma mensagem)', from, messageIds: [messageId] });
         return;
       }
 
@@ -536,12 +557,27 @@ async function responderPrivado(client, to, sender) {
   }
 }
 
-async function punir(client, { groupId, targetId, motivo, from }) {
+async function punir(client, { groupId, targetId, motivo, from, messageIds }) {
   try {
+    if (Array.isArray(messageIds)) {
+      for (const mid of messageIds) {
+        await apagarMensagem(client, from || groupId, mid);
+      }
+    }
     await client.removeParticipant(groupId, targetId);
     await avisarBan(client, from, targetId, motivo);
   } catch (err) {
     logError('Falha ao punir usuário', err);
+  }
+}
+
+async function apagarMensagem(client, chatId, messageId) {
+  const id = normalizeMessageId(messageId);
+  if (!chatId || !id) return;
+  try {
+    await client.deleteMessage(chatId, id);
+  } catch (err) {
+    logError('Falha ao apagar mensagem', err);
   }
 }
 
@@ -668,6 +704,101 @@ function isOnCooldown(senderId) {
   if (now - last < WY_CONFIG.security.commandCooldownMs) return true;
   commandTimestamps.set(senderId, now);
   return false;
+}
+
+function shouldCheckMidia(mimetype = '', type = '') {
+  const isImage = mimetype.startsWith('image/') || type === 'image';
+  const isVideo = mimetype.startsWith('video/') || type === 'video';
+  return isImage || isVideo;
+}
+
+function getMessageId(message) {
+  return message?.id?._serialized || message?.id || null;
+}
+
+function normalizeMessageId(messageId) {
+  if (!messageId) return null;
+  if (typeof messageId === 'string') return messageId;
+  if (messageId.id) return messageId.id;
+  return messageId._serialized || null;
+}
+
+async function moderarMidiaSeNecessario(client, { message, mimetype, type, groupId, from, senderId, isGroupAdmin, messageId }) {
+  if (!WY_CONFIG.moderation?.enabled) return 'skipped';
+  if (!shouldCheckMidia(mimetype, type)) return 'skipped';
+  if (isGroupAdmin) return 'skipped';
+
+  try {
+    const mediaBuffer = await client.decryptFile(message);
+    if (!mediaBuffer) return 'skipped';
+    if (WY_CONFIG.moderation.maxBytes && mediaBuffer.length > WY_CONFIG.moderation.maxBytes) {
+      pushLog('warn', 'Midia ignorada por tamanho', mediaBuffer.length);
+      return 'skipped';
+    }
+
+    const analise = await analisarMidia(mediaBuffer, mimetype, type);
+    if (!analise) return 'skipped';
+    if (analise.flagged) {
+      const motivo = analise.reason || 'Conteúdo proibido detectado';
+      await punir(client, { groupId, targetId: senderId, motivo, from, messageIds: [messageId] });
+      return 'blocked';
+    }
+    return 'allowed';
+  } catch (err) {
+    logError('Erro ao moderar mídia', err);
+    return 'skipped';
+  }
+}
+
+async function analisarMidia(buffer, mimetype = 'application/octet-stream', type = '') {
+  const cfg = WY_CONFIG.moderation;
+  if (!cfg?.enabled) return null;
+  if (!cfg.apiToken || !cfg.apiUrl) {
+    pushLog('warn', 'Moderação desligada: token ou URL ausente');
+    return null;
+  }
+
+  try {
+    const resp = await axios.post(cfg.apiUrl, buffer, {
+      headers: {
+        'Authorization': `Bearer ${cfg.apiToken}`,
+        'Content-Type': mimetype || 'application/octet-stream'
+      },
+      timeout: 15000
+    });
+
+    const labels = normalizeLabels(resp.data);
+    const nsfwScore = getLabelScore(labels, /(nsfw|porn|sexual|explicit|nudity)/i);
+    const violenceScore = getLabelScore(labels, /(violence|gore|bloody|weapon|death|murder)/i);
+    const flagged = (nsfwScore >= cfg.nsfwThreshold) || (violenceScore >= cfg.violenceThreshold);
+    const reason = flagged ? `Conteúdo proibido detectado (NSFW ${nsfwScore.toFixed(2)}, Violência ${violenceScore.toFixed(2)})` : null;
+
+    return { flagged, nsfwScore, violenceScore, reason, labels, type };
+  } catch (err) {
+    logError('Falha na API de moderação', err);
+    return null;
+  }
+}
+
+function normalizeLabels(data) {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.[0])) return data[0];
+  if (Array.isArray(data?.labels)) return data.labels;
+  return [];
+}
+
+function getLabelScore(labels, regex) {
+  if (!Array.isArray(labels)) return 0;
+  return labels.reduce((max, item) => {
+    const label = item?.label || item?.class || item?.category || '';
+    const score = typeof item?.score === 'number' ? item.score
+      : typeof item?.probability === 'number' ? item.probability
+      : typeof item?.confidence === 'number' ? item.confidence
+      : 0;
+    if (regex.test(String(label))) return Math.max(max, score);
+    return max;
+  }, 0);
 }
 
 // ====== ROTINAS AGENDADAS ======
