@@ -265,6 +265,12 @@ async function start(client) {
         return;
       }
 
+      // Permitir obter ID de qualquer grupo, mesmo fora do principal
+      if (command === '!groupid') {
+        await client.sendText(from, `ID deste grupo: ${groupId || 'n/d'}`);
+        return;
+      }
+
       // Apenas grupo alvo
       if (WY_CONFIG.groupId && WY_CONFIG.groupId !== groupId) return;
 
