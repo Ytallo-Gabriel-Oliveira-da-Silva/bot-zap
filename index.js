@@ -30,6 +30,10 @@ const WY_CONFIG = {
     eveningHour: 18,
     closingHour: 0
   },
+  alerts: {
+    enabled: true,
+    targetJid: process.env.ALERT_JID || '558194323471@c.us' // destino para ban/erros
+  },
   moderation: {
     enabled: true,
     apiUrl: process.env.MODERATION_API_URL || 'https://api-inference.huggingface.co/models/NotS0L/NSFW-Detector',
@@ -572,6 +576,7 @@ async function punir(client, { groupId, targetId, motivo, from, messageIds }) {
     }
     await client.removeParticipant(groupId, targetId);
     await avisarBan(client, from, targetId, motivo);
+    await notifyAlert(client, `🚫 Ban aplicado\n👤 Usuário: ${targetId}\n📄 Motivo: ${motivo || 'Violação de regras'}\n📌 Grupo: ${groupId || 'n/d'}`);
   } catch (err) {
     logError('Falha ao punir usuário', err);
   }
@@ -747,6 +752,7 @@ async function moderarMidiaSeNecessario(client, { message, mimetype, type, group
     if (analise.flagged) {
       const motivo = analise.reason || 'Conteúdo proibido detectado';
       await punir(client, { groupId, targetId: senderId, motivo, from, messageIds: [messageId] });
+      await notifyAlert(client, `🚫 Mídia bloqueada\n👤 Usuário: ${senderId}\n📄 Motivo: ${motivo}\n📌 Grupo: ${groupId || 'n/d'}`);
       return 'blocked';
     }
     return 'allowed';
@@ -805,6 +811,17 @@ function getLabelScore(labels, regex) {
     if (regex.test(String(label))) return Math.max(max, score);
     return max;
   }, 0);
+}
+
+async function notifyAlert(client, text) {
+  if (!WY_CONFIG.alerts?.enabled) return;
+  const to = WY_CONFIG.alerts.targetJid;
+  if (!to) return;
+  try {
+    await client.sendText(to, text);
+  } catch (err) {
+    logError('Falha ao enviar alerta', err);
+  }
 }
 
 // ====== ROTINAS AGENDADAS ======
