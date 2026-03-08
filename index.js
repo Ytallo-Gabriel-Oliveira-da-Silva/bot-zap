@@ -6,6 +6,8 @@ const axios = require('axios');
 const puppeteer = require('puppeteer');
 const os = require('os');
 
+const BLACKLIST_PATH = path.join(__dirname, 'data', 'blacklist.json');
+
 const WY_CONFIG = {
   botName: 'WY Bot',
   groupName: 'WILLZINHOSTORE',
@@ -188,6 +190,7 @@ const logs = [];
 const sessionDir = path.join(__dirname, '_IGNORE_session');
 const cacheDir = path.join(__dirname, '_IGNORE_BOT');
 const commandTimestamps = new Map(); // key: senderId, value: ts
+let blacklist = new Set();
 
 function pushLog(level, message, detail = null) {
   const payload = {
@@ -231,6 +234,8 @@ async function start(client) {
   whatsappState = 'connected';
   pushLog('info', 'Bot conectado no WhatsApp');
 
+  loadBlacklist();
+
   iniciarRotinasAgendadas(client);
   registrarBoasVindas(client);
 
@@ -257,6 +262,12 @@ async function start(client) {
       const botMentioned = Array.isArray(mentionedJidList) && mentionedJidList.includes(botNumber);
 
       console.log('[MSG]', { from, isGroupMsg, command, isGroupAdmin, groupId });
+
+      // Bloqueio imediato para números na blacklist
+      if (blacklist.has(senderId) && isGroupMsg && groupId) {
+        await punir(client, { groupId, targetId: senderId, motivo: 'Lista negra', from, messageIds: [messageId] });
+        return;
+      }
 
       // Segurança: limitar tamanho
       if (body.length > WY_CONFIG.security.maxMessageLength) {
@@ -576,6 +587,7 @@ async function punir(client, { groupId, targetId, motivo, from, messageIds }) {
     }
     await client.removeParticipant(groupId, targetId);
     await avisarBan(client, from, targetId, motivo);
+    addToBlacklist(targetId);
     await notifyAlert(client, `🚫 Ban aplicado\n👤 Usuário: ${targetId}\n📄 Motivo: ${motivo || 'Violação de regras'}\n📌 Grupo: ${groupId || 'n/d'}`);
   } catch (err) {
     logError('Falha ao punir usuário', err);
@@ -720,7 +732,8 @@ function isOnCooldown(senderId) {
 function shouldCheckMidia(mimetype = '', type = '') {
   const isImage = mimetype.startsWith('image/') || type === 'image';
   const isVideo = mimetype.startsWith('video/') || type === 'video';
-  return isImage || isVideo;
+  const isSticker = type === 'sticker' || mimetype.includes('webp');
+  return isImage || isVideo || isSticker;
 }
 
 function getMessageId(message) {
@@ -748,6 +761,9 @@ async function moderarMidiaSeNecessario(client, { message, mimetype, type, group
     }
 
     const analise = await analisarMidia(mediaBuffer, mimetype, type);
+    if (!analise) {
+      pushLog('warn', 'Análise de mídia retornou nula', `${mimetype}|${type}`);
+    }
     if (!analise) return 'skipped';
     if (analise.flagged) {
       const motivo = analise.reason || 'Conteúdo proibido detectado';
@@ -788,6 +804,7 @@ async function analisarMidia(buffer, mimetype = 'application/octet-stream', type
     return { flagged, nsfwScore, violenceScore, reason, labels, type };
   } catch (err) {
     logError('Falha na API de moderação', err);
+    // fallback simples: se a API falhar, não bloquear para evitar falsos positivos silenciosos
     return null;
   }
 }
@@ -811,6 +828,38 @@ function getLabelScore(labels, regex) {
     if (regex.test(String(label))) return Math.max(max, score);
     return max;
   }, 0);
+}
+
+function loadBlacklist() {
+  try {
+    const dir = path.dirname(BLACKLIST_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    if (!fs.existsSync(BLACKLIST_PATH)) {
+      blacklist = new Set();
+      return;
+    }
+    const data = JSON.parse(fs.readFileSync(BLACKLIST_PATH, 'utf-8'));
+    blacklist = new Set(Array.isArray(data) ? data : []);
+  } catch (err) {
+    logError('Falha ao carregar blacklist', err);
+    blacklist = new Set();
+  }
+}
+
+function saveBlacklist() {
+  try {
+    const dir = path.dirname(BLACKLIST_PATH);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(BLACKLIST_PATH, JSON.stringify(Array.from(blacklist), null, 2));
+  } catch (err) {
+    logError('Falha ao salvar blacklist', err);
+  }
+}
+
+function addToBlacklist(jid) {
+  if (!jid) return;
+  blacklist.add(jid);
+  saveBlacklist();
 }
 
 async function notifyAlert(client, text) {
