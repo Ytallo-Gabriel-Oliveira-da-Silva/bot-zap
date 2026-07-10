@@ -213,18 +213,24 @@ function logError(message, err) {
 }
 
 function createClient() {
-  // Headless + useChrome false evita abrir janela gráfica; QR aparece apenas no terminal.
   console.log('🟢 Aguardando conexão: o QR Code será exibido no terminal.');
+
   return create({
     sessionId: "BOT",
     multiDevice: true,
-    authTimeout: 60,
+    authTimeout: 120,
     blockCrashLogs: true,
     disableSpins: true,
     headless: true,
-    useChrome: false, // usar o Chromium do puppeteer para evitar CHROME_PATH
-    executablePath: puppeteer.executablePath(),
-    qrTimeout: 0
+    useChrome: true,
+    qrTimeout: 0,
+
+    browserArgs: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu'
+    ]
   });
 }
 
