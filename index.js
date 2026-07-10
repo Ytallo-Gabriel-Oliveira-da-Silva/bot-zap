@@ -5,6 +5,8 @@ const { create } = require('@open-wa/wa-automate');
 const axios = require('axios');
 const puppeteer = require('puppeteer');
 const os = require('os');
+const express = require('express');
+const app = express();
 
 const BLACKLIST_PATH = path.join(__dirname, 'data', 'blacklist.json');
 
@@ -213,7 +215,7 @@ function logError(message, err) {
 }
 
 function createClient() {
-  console.log('🟢 Aguardando conexão: o QR Code será exibido no terminal.');
+  console.log('🟢 Aguardando conexão WhatsApp');
 
   return create({
     sessionId: "BOT",
@@ -223,13 +225,18 @@ function createClient() {
     disableSpins: true,
     headless: true,
     useChrome: true,
+
     qrTimeout: 0,
 
-    browserArgs: [
+    killProcessOnBrowserClose: true,
+
+    chromiumArgs: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
-      '--disable-gpu'
+      '--disable-gpu',
+      '--no-first-run',
+      '--no-zygote'
     ]
   });
 }
@@ -531,7 +538,15 @@ async function getMetrics() {
   };
 }
 
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🌐 Servidor HTTP rodando na porta ${PORT}`);
+});
+
 module.exports = { startBot, stopBot, getBotStatus, getMetrics };
+
+if (require.main === module) {
+  startBot().catch(console.error);
+}
 
 // Permite executar "node index.js" diretamente para iniciar o bot.
 if (require.main === module) {
